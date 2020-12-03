@@ -72,40 +72,21 @@ class Battle:
 
         first_fighter = armyes[0].get_unit
         second_fighter = armyes[1].get_unit
-        while first_fighter.is_alive and second_fighter.is_alive:#armyes[1].len_army > 0:#min(army.len_army for army in armyes) > 0:
+        while first_fighter.is_alive and second_fighter.is_alive:
             winner = fight_units(first_fighter, second_fighter)
-            if first_fighter is winner:
-                if armyes[1].len_army > 0:
-                    second_fighter = armyes[1].get_unit
-            elif second_fighter is winner:
-                if armyes[0].len_army > 0:
-                    first_fighter = armyes[0].get_unit
+            if first_fighter is winner and armyes[1].len_army > 0:
+                second_fighter = armyes[1].get_unit
+            elif second_fighter is winner and armyes[0].len_army > 0:
+                first_fighter = armyes[0].get_unit
 
         return first_fighter.is_alive and armyes[1].len_army == 0
 
 def fight_units(*units):
-    # print('ПЕРВЫЙ  ' + str(units[0]), 'ВТОРОЙ  ' + str(units[1]))
-    # print('здоровье 1-го ' + str(units[0].health), ' здоровье 2-го ' + str(units[1].health), ' НАЧИНАЕМ!')
     while min(unit.health for unit in units) > 0:
         if units[0].is_alive:
             units[1].get_hit(units[0].attack)
-            # print('здоровье 1-го ' + str(units[0].health), ' здоровье 2-го ' + str(units[1].health), ' тюк второго!')
         if units[1].is_alive:
             units[0].get_hit(units[1].attack)
-            # print('здоровье 1-го ' + str(units[0].health), ' здоровье 2-го ' + str(units[1].health), ' тюк первого!')
     winner = units[0] if units[0].is_alive else units[1]
-
-    # print('ППППООБББЕДДДИЛЛЛЛ ' + str(winner))
     return winner
-
-army_1 = Army()
-army_2 = Army()
-army_1.add_units(Warrior, 2)
-print(army_1._army)
-print(army_1.len_army)
-army_2.add_units(Warrior, 2)
-print(army_2._army)
-print(army_2.len_army)
-battle = Battle()
-print(battle.fight(army_1, army_2))
 
