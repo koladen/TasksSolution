@@ -37,7 +37,6 @@ class Warrior:
     def max_health(self, value):
         self._max_health = value
 
-
     @property
     def penetration(self):
         return self._penetration
@@ -110,6 +109,7 @@ class Warrior:
     def _check_max_heal(current_health, max_health, health_points):
         return min(current_health+health_points, max_health)
 
+
 class Knight(Warrior):
     def __init__(self):
         super().__init__(attack=7)
@@ -133,6 +133,8 @@ class Lancer(Warrior):
     def __init__(self):
         super().__init__(health=50, attack=6, penetration=50)
 
+# TODO подумать, а половину чего он должен наносить 2-му? Половину урона по первому,
+# TODO или половину своего урона - защита 2-го?
     def penetrate_enemy(self, enemy_units, damage):
         second_line_enemy_index = super()._find_alive_warrior_index(enemy_units)
         enemy_units[second_line_enemy_index].health -= int(damage * (self._penetration / 100))
