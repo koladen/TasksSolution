@@ -1,18 +1,17 @@
 """
-It seems that the Warrior, Knight, Defender and Vampire are not enough to win the battle. Let's add one more powerful
-unit type - the Lancer.
-Lancer should be the subclass of the Warrior class and should attack in a specific way - when he hits the other unit,
-he also deals a 50% of the deal damage to the enemy unit, standing behind the firstly assaulted one (enemy defense makes
- the deal damage value lower - consider this).
-The basic parameters of the Lancer:
-health = 50
-attack = 6
+The battle continues and each army is losing good warriors. Let's try to fix that and add a new unit type - the Healer.
+Healer won't be fighting (his attack = 0, so he can't deal the damage). But his role is also very important - every time
+ the allied soldier hits the enemy, the Healer will heal the allie, standing right in front of him by +2 health points
+  with the heal() method. Note that the health after healing can't be greater than the maximum health of the unit. For
+  example, if the Healer heals the Warrior with 49 health points, the Warrior will have 50 hp, because this is the
+  maximum for him.
 """
 
 
 class Warrior:
     def __init__(self, health=50, attack=5, defense=0, vampirism=0, penetration=0):
         self._health = health
+        self._max_health = health
         self._attack = attack
         self._defense = defense
         self._vampirism = vampirism
@@ -29,6 +28,15 @@ class Warrior:
     @health.setter
     def health(self, value):
         self._health = value
+
+    @property
+    def max_health(self):
+        return self._max_health
+
+    @max_health.setter
+    def max_health(self, value):
+        self._max_health = value
+
 
     @property
     def penetration(self):
@@ -65,22 +73,21 @@ class Warrior:
     def do_attack(self, enemy, enemy_units, ally_units, points):
         damage = Warrior._calculate_damage(enemy, points)
         enemy.health -= damage
-        heal = self._vampire_healing(damage)
-        self._health += heal
+        self._vampire_healing(damage)
+        self._heal_ally_by_healer(ally_units)
         self._penetrate_enemy(enemy_units, damage)
 
-    def _penetrate_enemy(self, enemy_units, damage):
-        # if self._penetration:
-        #     second_line_enemy_index = Warrior._find_alive_warrior_index(enemy_units)
-        #     if enemy_units:
-        #         enemy_units[second_line_enemy_index].health -= int(damage * (self._penetration / 100))
-        if enemy_units and self._penetration:
-            second_line_enemy_index = Warrior._find_alive_warrior_index(enemy_units)
-            enemy_units[second_line_enemy_index].health -= int(damage * (self._penetration / 100))
+    def _heal_ally_by_healer(self, ally_units):
+        if ally_units and isinstance(ally_units[0], Healer):
+            ally_units[0].heal(self)
 
+    def _penetrate_enemy(self, enemy_units, damage):
+        if enemy_units and isinstance(self, Lancer):
+            self.penetrate_enemy(enemy_units, damage)
 
     def _vampire_healing(self, damage):
-        return int(damage * (self._vampirism / 100))
+        if isinstance(self, Vampire):
+            self.bite(damage)
 
     @staticmethod
     def _calculate_damage(enemy, points):
@@ -99,6 +106,9 @@ class Warrior:
                 break
         return unit_index
 
+    @staticmethod
+    def _check_max_heal(current_health, max_health, health_points):
+        return min(current_health+health_points, max_health)
 
 class Knight(Warrior):
     def __init__(self):
@@ -114,10 +124,27 @@ class Vampire(Warrior):
     def __init__(self):
         super().__init__(health=40, attack=4, vampirism=50)
 
+    def bite(self, damage):
+        estimate_health_points = int(damage * (self._vampirism / 100))
+        self._health = super()._check_max_heal(self.health, self.max_health, estimate_health_points)
+
 
 class Lancer(Warrior):
     def __init__(self):
         super().__init__(health=50, attack=6, penetration=50)
+
+    def penetrate_enemy(self, enemy_units, damage):
+        second_line_enemy_index = super()._find_alive_warrior_index(enemy_units)
+        enemy_units[second_line_enemy_index].health -= int(damage * (self._penetration / 100))
+
+
+class Healer(Warrior):
+    def __init__(self):
+        super().__init__(health=60, attack=0)
+        self._heal_points = 2
+
+    def heal(self, ally_unit):
+        ally_unit.health = super()._check_max_heal(ally_unit.health, ally_unit.max_health, self._heal_points)
 
 
 class Army:
