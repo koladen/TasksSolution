@@ -17,6 +17,10 @@ class Warrior:
         self._vampirism = vampirism
         self._penetration = penetration
 
+    def __repr__(self):
+        return (f'{self.__class__.__name__}('
+                f'H:{self._health!r},A:{self._attack!r},D:{self._defense!r})')
+
     @property
     def is_alive(self):
         return self._health > 0
