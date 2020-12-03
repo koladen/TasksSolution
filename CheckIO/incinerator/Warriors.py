@@ -67,9 +67,9 @@ bruce = Warrior()
 carl = Knight()
 dave = Warrior()
 
-assert fight(chuck, bruce) == True
-assert fight(dave, carl) == False
-assert chuck.is_alive == True
-assert bruce.is_alive == False
-assert carl.is_alive == True
-assert dave.is_alive == False
+assert fight(chuck, bruce)
+assert fight(dave, carl) is False
+assert chuck.is_alive is True
+assert bruce.is_alive is False
+assert carl.is_alive is True
+assert dave.is_alive is False
