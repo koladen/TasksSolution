@@ -47,11 +47,11 @@ class Warrior:
         self._vampirism = value
 
     @property
-    def defence(self):
+    def defense(self):
         return self._defense
 
-    @defence.setter
-    def defence(self, value):
+    @defense.setter
+    def defense(self, value):
         self._defense = value
 
     @property
@@ -84,8 +84,8 @@ class Warrior:
 
     @staticmethod
     def _calculate_damage(enemy, points):
-        if enemy.defence < points:
-            damage = points - enemy.defence
+        if enemy.defense < points:
+            damage = points - enemy.defense
         else:
             damage = 0
         return damage

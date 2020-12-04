@@ -41,11 +41,11 @@ class Warrior:
         self._vampirism = value
 
     @property
-    def defence(self):
+    def defense(self):
         return self._defense
 
-    @defence.setter
-    def defence(self, value):
+    @defense.setter
+    def defense(self, value):
         self._defense = value
 
     @property
