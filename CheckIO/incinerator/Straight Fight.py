@@ -159,32 +159,32 @@ class Healer(Warrior):
 
 class Army:
     def __init__(self):
-        self._army = []
+        self._units = []
 
     @property
-    def army(self):
-        return self._army
+    def units(self):
+        return self._units
 
-    @army.setter
-    def army(self, value):
-        self._army = value
+    @units.setter
+    def units(self, value):
+        self._units = value
 
     def add_units(self, fighter, count):
-        self._army.extend([fighter() for _ in range(count)])
+        self._units.extend([fighter() for _ in range(count)])
 
     @property
     def get_unit(self):
-        return self._army.pop(0)
+        return self._units.pop(0)
 
     @property
     def len_army(self):
-        return len(self._army)
+        return len(self._units)
 
     def __repr__(self):
         composition = ''
-        for unit in self._army[:-1]:
+        for unit in self._units[:-1]:
             composition += str(unit) + ', '
-        composition = composition + str(self._army[-1])
+        composition = composition + str(self._units[-1])
         return (f'{self.__class__.__name__}('
                 f':{composition})')
 
@@ -208,9 +208,9 @@ class Battle:
     @staticmethod
     def straight_fight(army_1, army_2):
         while min(army_1.len_army, army_2.len_army) > 0:
-            army_1.army = [unit for unit in army_1.army if unit.is_alive]
-            army_2.army = [unit for unit in army_2.army if unit.is_alive]
-            for unit1, unit2 in list(zip_longest(army_1.army, army_2.army)):
+            army_1.units = [unit for unit in army_1.units if unit.is_alive]
+            army_2.units = [unit for unit in army_2.units if unit.is_alive]
+            for unit1, unit2 in list(zip_longest(army_1.units, army_2.units)):
                 fight(unit1, unit2)
         return army_1.len_army > 0
 
@@ -218,9 +218,9 @@ class Battle:
     def fight_units(army1, army2, *units):
         while min(unit.health for unit in units) > 0:
             if units[0].is_alive:
-                units[0].do_attack(units[1], army2.army, army1.army, units[0].attack)
+                units[0].do_attack(units[1], army2.units, army1.units, units[0].attack)
             if units[1].is_alive:
-                units[1].do_attack(units[0], army1.army, army2.army, units[1].attack)
+                units[1].do_attack(units[0], army1.units, army2.units, units[1].attack)
         winner = units[0] if units[0].is_alive else units[1]
         return winner
 
