@@ -176,6 +176,14 @@ class Army:
     def len_army(self):
         return len(self._army)
 
+    def __repr__(self):
+        composition = ''
+        for unit in self._army[:-1]:
+            composition += str(unit) + ', '
+        composition = composition + str(self._army[-1])
+        return (f'{self.__class__.__name__}('
+                f':{composition})')
+
 
 class Battle:
     def __init__(self):
@@ -191,7 +199,6 @@ class Battle:
                 second_fighter = armyes[1].get_unit
             elif second_fighter is winner and armyes[0].len_army > 0:
                 first_fighter = armyes[0].get_unit
-
         return first_fighter.is_alive and armyes[1].len_army == 0
 
     @staticmethod
@@ -241,7 +248,6 @@ if __name__ == '__main__':
     # battle tests
     my_army = Army()
     my_army.add_units(Knight, 3)
-
     enemy_army = Army()
     enemy_army.add_units(Warrior, 3)
 
@@ -251,7 +257,6 @@ if __name__ == '__main__':
 
     army_4 = Army()
     army_4.add_units(Warrior, 30)
-
     battle = Battle()
 
     assert battle.fight(my_army, enemy_army) is True
