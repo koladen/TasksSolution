@@ -3,36 +3,30 @@ In this mission you should create a new class Weapon(health, attack, defense, va
 your soldiers with weapons. Every weapon's object will have the parameters that will show how the soldier's
 characteristics change while he uses this weapon. Assume that if the soldier doesn't have some of the characteristics
 (for example, defense or vampirism), but the weapon have those, these parameters don't need to be added to the soldier.
-
 The parameters list:
 health - add to the current health and the maximum health of the soldier this modificator;
 attack - add to the soldier's attack this modificator;
 defense - add to the soldier's defense this modificator;
 vampirism - increase the soldier’s vampirism to this number (in %. So vampirism = 20 means +20%);
 heal_power - increase the amount of health which the healer restore for the allied unit.
-
 All parameters could be positive or negative, so when a negative modificator is being added to the soldier’s stats,
 they are decreasing, but none of them can be less than 0.
-
 Let’s look at this example: vampire (basic parameters: health = 40, attack = 4, vampirism = 50%)
 equip the Weapon(20, 5, 2, -60, -1). The vampire has the health and the attack, so they will change - health will grow
 up to 60 (40 + 20), attack will be 9 (4 + 5). The vampire doesn’t have defense or the heal_power, so these weapon
 modificators will be ignored. The weapon's vampirism modificator -60% will work as well. The standard vampirism value
 is only 50%, so we’ll get -10%. But, as we said before, the parameters can’t be less than 0, so the vampirism after all
 manipulations will be just 0%.
-
 Also you should create a few standard weapons classes, which should be the subclasses of the Weapon. Here’s their list:
 Sword - health +5, attack +2
 Shield - health +20, attack -1, defense +2
 GreatAxe - health -15, attack +5, defense -2, vampirism +10%
 Katana - health -20, attack +6, defense -5, vampirism +50%
 MagicWand - health +30, attack +3, heal_power +3
-
 And finally, you should add an equip_weapon(weapon_name) method to all of the soldiers classes. It should equip the
 chosen soldier with the chosen weapon.
 This method also should work for the units in the army. You should hold them in the list and use it like this:
 my_army.units[0].equip_weapon(Sword()) - equip the first soldier with the sword.
-
 Notes:
 While healing (both vampirism and health restored by the healer), the health can’t be greater than the maximum amount
 of health for this unit (with consideration of all of the weapon's modificators).
@@ -47,18 +41,17 @@ from itertools import zip_longest
 
 
 class Warrior:
-    def __init__(self, health=50, attack=5, defense=0, vampirism=0, penetration=0):
+    def __init__(self, health=50, attack=5):
         self._health = health
         self._max_health = health
         self._attack = attack
-        self._defense = defense
-        self._vampirism = vampirism
-        self._penetration = penetration
         self._weapon_list = []
 
     def __repr__(self):
+        defense = self.__dict__.get('_defense', 0)
+        vamp = self.__dict__.get('_vampirism', 0)
         return (f'{self.__class__.__name__}('
-                f'H:{self._health!r},A:{self._attack!r},D:{self._defense!r},Vamp:{self._vampirism!r})')
+                f'H:{self._health!r},A:{self._attack!r},D:{defense!r},Vamp:{vamp!r})')
 
     @property
     def weapon_list(self):
@@ -70,11 +63,12 @@ class Warrior:
 
     def equip_weapon(self, weapon_name):
         for parametr, value in weapon_name.__dict__.items():
-            if parametr in self.__dict__ and bool(self.__dict__.get(parametr, 0)):
+            if parametr in self.__dict__ and (self.__dict__.get(parametr, None) is not None):
                 self.__dict__[parametr] = Warrior._check_max_parametr(self.__dict__[parametr],
                                                                       weapon_name.__dict__[parametr])
                 if parametr == '_health':
                     self._max_health = self._health
+        self._weapon_list.append(weapon_name)
 
     @property
     def len_weapon_list(self):
@@ -101,30 +95,6 @@ class Warrior:
         self._max_health = value
 
     @property
-    def penetration(self):
-        return self._penetration
-
-    @penetration.setter
-    def penetration(self, value):
-        self._penetration = value
-
-    @property
-    def vampirism(self):
-        return self._vampirism
-
-    @vampirism.setter
-    def vampirism(self, value):
-        self._vampirism = value
-
-    @property
-    def defense(self):
-        return self._defense
-
-    @defense.setter
-    def defense(self, value):
-        self._defense = value
-
-    @property
     def attack(self):
         return self._attack
 
@@ -135,26 +105,18 @@ class Warrior:
     def do_attack(self, enemy, enemy_units, ally_units, points):
         damage = Warrior._calculate_damage(enemy, points)
         enemy.health -= damage
-        self._vampire_healing(damage)
         self._heal_ally_by_healer(ally_units)
-        self._penetrate_enemy(enemy_units, damage)
+        return damage
 
     def _heal_ally_by_healer(self, ally_units):
         if ally_units and isinstance(ally_units[0], Healer):
             ally_units[0].heal(self)
 
-    def _penetrate_enemy(self, enemy_units, damage):
-        if enemy_units and isinstance(self, Lancer):
-            self.penetrate_enemy(enemy_units, damage)
-
-    def _vampire_healing(self, damage):
-        if isinstance(self, Vampire):
-            self.bite(damage)
-
     @staticmethod
     def _calculate_damage(enemy, points):
-        if enemy.defense < points:
-            damage = points - enemy.defense
+        defense = enemy.__dict__.get('_defense', 0)
+        if defense < points:
+            damage = points - defense
         else:
             damage = 0
         return damage
@@ -190,12 +152,35 @@ class Rookie(Warrior):
 
 class Defender(Warrior):
     def __init__(self):
-        super().__init__(health=60, attack=3, defense=2)
+        super().__init__(health=60, attack=3)
+        self._defense = 2
+
+    @property
+    def defense(self):
+        return self._defense
+
+    @defense.setter
+    def defense(self, value):
+        self._defense = value
 
 
 class Vampire(Warrior):
     def __init__(self):
-        super().__init__(health=40, attack=4, vampirism=50)
+        super().__init__(health=40, attack=4)
+        self._vampirism = 50
+
+    @property
+    def vampirism(self):
+        return self._vampirism
+
+    @vampirism.setter
+    def vampirism(self, value):
+        self._vampirism = value
+
+    def do_attack(self, enemy, enemy_units, ally_units, points):
+        damage = super().do_attack(enemy, enemy_units, ally_units, points)
+        self.bite(damage)
+        return damage
 
     def bite(self, damage):
         estimate_health_points = int(damage * (self._vampirism / 100))
@@ -204,13 +189,28 @@ class Vampire(Warrior):
 
 class Lancer(Warrior):
     def __init__(self):
-        super().__init__(health=50, attack=6, penetration=50)
+        super().__init__(health=50, attack=6)
+        self._penetration = 50
+
+    @property
+    def penetration(self):
+        return self._penetration
+
+    @penetration.setter
+    def penetration(self, value):
+        self._penetration = value
+
+    def do_attack(self, enemy, enemy_units, ally_units, points):
+        damage = super().do_attack(enemy, enemy_units, ally_units, points)
+        self.penetrate_enemy(enemy_units, damage)
+        return damage
 
 # TODO подумать, а половину чего он должен наносить 2-му? Половину урона по первому,
 # TODO или половину своего урона - защита 2-го?
     def penetrate_enemy(self, enemy_units, damage):
-        second_line_enemy_index = super()._find_alive_warrior_index(enemy_units)
-        enemy_units[second_line_enemy_index].health -= int(damage * (self._penetration / 100))
+        if enemy_units:
+            second_line_enemy_index = super()._find_alive_warrior_index(enemy_units)
+            enemy_units[second_line_enemy_index].health -= int(damage * (self._penetration / 100))
 
 
 class Healer(Warrior):
@@ -376,19 +376,407 @@ def fight(*units):
         return find_winner(units)
 
 
-weapon_1 = Katana()
-weapon_2 = Shield()
-my_army = Army()
-my_army.add_units(Vampire, 2)
-my_army.add_units(Rookie, 2)
-enemy_army = Army()
-enemy_army.add_units(Warrior, 1)
-enemy_army.add_units(Defender, 2)
-my_army.units[0].equip_weapon(weapon_1)
-my_army.units[1].equip_weapon(weapon_1)
-my_army.units[2].equip_weapon(weapon_2)
-enemy_army.units[0].equip_weapon(weapon_1)
-enemy_army.units[1].equip_weapon(weapon_2)
-enemy_army.units[2].equip_weapon(weapon_2)
+if __name__ == '__main__':
+    # These "asserts" using only for self-checking and not necessary for auto-testing
+
+    # fight tests
+    chuck = Warrior()
+    bruce = Warrior()
+    carl = Knight()
+    dave = Warrior()
+    mark = Warrior()
+
+    assert fight(chuck, bruce) is True
+    assert fight(dave, carl) is False
+    assert chuck.is_alive is True
+    assert bruce.is_alive is False
+    assert carl.is_alive is True
+    assert dave.is_alive is False
+    assert fight(carl, mark) is False
+    assert carl.is_alive is False
+
+    # battle tests
+    my_army = Army()
+    my_army.add_units(Knight, 3)
+
+    enemy_army = Army()
+    enemy_army.add_units(Warrior, 3)
+
+    army_3 = Army()
+    army_3.add_units(Warrior, 20)
+    army_3.add_units(Knight, 5)
+
+    army_4 = Army()
+    army_4.add_units(Warrior, 30)
+
+    battle = Battle()
+
+    assert battle.fight(my_army, enemy_army) is True
+    assert battle.fight(army_3, army_4) is False
+    print("Coding complete? Let's try tests!")
+
+if __name__ == '__main__':
+    # These "asserts" using only for self-checking and not necessary for auto-testing
+
+    # fight tests
+    chuck = Warrior()
+    bruce = Warrior()
+    carl = Knight()
+    dave = Warrior()
+    mark = Warrior()
+    bob = Defender()
+    mike = Knight()
+    rog = Warrior()
+    lancelot = Defender()
+
+    assert fight(chuck, bruce) is True
+    assert fight(dave, carl) is False
+    assert chuck.is_alive is True
+    assert bruce.is_alive is False
+    assert carl.is_alive is True
+    assert dave.is_alive is False
+    assert fight(carl, mark) is False
+    assert carl.is_alive is False
+    assert fight(bob, mike) is False
+    assert fight(lancelot, rog) is True
+
+    # battle tests
+    my_army = Army()
+    my_army.add_units(Defender, 1)
+
+    enemy_army = Army()
+    enemy_army.add_units(Warrior, 2)
+
+    army_3 = Army()
+    army_3.add_units(Warrior, 1)
+    army_3.add_units(Defender, 1)
+
+    army_4 = Army()
+    army_4.add_units(Warrior, 2)
+
+    battle = Battle()
+
+    assert battle.fight(my_army, enemy_army) is False
+    assert battle.fight(army_3, army_4) is True
+    print("Coding complete? Let's try tests!")
+
+if __name__ == '__main__':
+    # These "asserts" using only for self-checking and not necessary for auto-testing
+
+    # fight tests
+    chuck = Warrior()
+    bruce = Warrior()
+    carl = Knight()
+    dave = Warrior()
+    mark = Warrior()
+    bob = Defender()
+    mike = Knight()
+    rog = Warrior()
+    lancelot = Defender()
+    eric = Vampire()
+    adam = Vampire()
+    richard = Defender()
+    ogre = Warrior()
+
+    # battle tests
+    my_army = Army()
+    my_army.add_units(Defender, 2)
+    my_army.add_units(Vampire, 2)
+    my_army.add_units(Warrior, 1)
+
+    enemy_army = Army()
+    enemy_army.add_units(Warrior, 2)
+    enemy_army.add_units(Defender, 2)
+    enemy_army.add_units(Vampire, 3)
+
+    army_3 = Army()
+    army_3.add_units(Warrior, 1)
+    army_3.add_units(Defender, 4)
+
+    army_4 = Army()
+    army_4.add_units(Vampire, 3)
+    army_4.add_units(Warrior, 2)
+
+    battle = Battle()
+
+    assert battle.fight(my_army, enemy_army) is False
+    assert battle.fight(army_3, army_4) is True
+    print("Coding complete? Let's try tests!")
+
+if __name__ == '__main__':
+    # These "asserts" using only for self-checking and not necessary for auto-testing
+
+    # fight tests
+    chuck = Warrior()
+    bruce = Warrior()
+    carl = Knight()
+    dave = Warrior()
+    mark = Warrior()
+    bob = Defender()
+    mike = Knight()
+    rog = Warrior()
+    lancelot = Defender()
+    eric = Vampire()
+    adam = Vampire()
+    richard = Defender()
+    ogre = Warrior()
+    freelancer = Lancer()
+    vampire = Vampire()
+
+    assert fight(chuck, bruce) is True
+    assert fight(dave, carl) is False
+    assert chuck.is_alive is True
+    assert bruce.is_alive is False
+    assert carl.is_alive is True
+    assert dave.is_alive is False
+    assert fight(carl, mark) is False
+    assert carl.is_alive is False
+    assert fight(bob, mike) is False
+    assert fight(lancelot, rog) is True
+    assert fight(eric, richard) is False
+    assert fight(ogre, adam) is True
+    assert fight(freelancer, vampire) is True
+    assert freelancer.is_alive is True
+
+    # battle tests
+    my_army = Army()
+    my_army.add_units(Defender, 2)
+    my_army.add_units(Vampire, 2)
+    my_army.add_units(Lancer, 4)
+    my_army.add_units(Warrior, 1)
+
+    enemy_army = Army()
+    enemy_army.add_units(Warrior, 2)
+    enemy_army.add_units(Lancer, 2)
+    enemy_army.add_units(Defender, 2)
+    enemy_army.add_units(Vampire, 3)
+
+    army_3 = Army()
+    army_3.add_units(Warrior, 1)
+    army_3.add_units(Lancer, 1)
+    army_3.add_units(Defender, 2)
+
+    army_4 = Army()
+    army_4.add_units(Vampire, 3)
+    army_4.add_units(Warrior, 1)
+    army_4.add_units(Lancer, 2)
+
+    battle = Battle()
+
+    assert battle.fight(my_army, enemy_army) is True
+    assert battle.fight(army_3, army_4) is False
+    print("Coding complete? Let's try tests!")
+
+if __name__ == '__main__':
+    # These "asserts" using only for self-checking and not necessary for auto-testing
+
+    # fight tests
+    chuck = Warrior()
+    bruce = Warrior()
+    carl = Knight()
+    dave = Warrior()
+    mark = Warrior()
+    bob = Defender()
+    mike = Knight()
+    rog = Warrior()
+    lancelot = Defender()
+    eric = Vampire()
+    adam = Vampire()
+    richard = Defender()
+    ogre = Warrior()
+    freelancer = Lancer()
+    vampire = Vampire()
+    priest = Healer()
+
+    assert fight(chuck, bruce) is True
+    assert fight(dave, carl) is False
+    assert chuck.is_alive is True
+    assert bruce.is_alive is False
+    assert carl.is_alive is True
+    assert dave.is_alive is False
+    assert fight(carl, mark) is False
+    assert carl.is_alive is False
+    assert fight(bob, mike) is False
+    assert fight(lancelot, rog) is True
+    assert fight(eric, richard) is False
+    assert fight(ogre, adam) is True
+    assert fight(freelancer, vampire) is True
+    assert freelancer.is_alive is True
+    assert freelancer.health == 14
+    priest.heal(freelancer)
+    assert freelancer.health == 16
+
+    # battle tests
+    my_army = Army()
+    my_army.add_units(Defender, 2)
+    my_army.add_units(Healer, 1)
+    my_army.add_units(Vampire, 2)
+    my_army.add_units(Lancer, 2)
+    my_army.add_units(Healer, 1)
+    my_army.add_units(Warrior, 1)
+
+    enemy_army = Army()
+    enemy_army.add_units(Warrior, 2)
+    enemy_army.add_units(Lancer, 4)
+    enemy_army.add_units(Healer, 1)
+    enemy_army.add_units(Defender, 2)
+    enemy_army.add_units(Vampire, 3)
+    enemy_army.add_units(Healer, 1)
+
+    army_3 = Army()
+    army_3.add_units(Warrior, 1)
+    army_3.add_units(Lancer, 1)
+    army_3.add_units(Healer, 1)
+    army_3.add_units(Defender, 2)
+
+    army_4 = Army()
+    army_4.add_units(Vampire, 3)
+    army_4.add_units(Warrior, 1)
+    army_4.add_units(Healer, 1)
+    army_4.add_units(Lancer, 2)
+
+    battle = Battle()
+
+    assert battle.fight(my_army, enemy_army) is False
+    assert battle.fight(army_3, army_4) is True
+    print("Coding complete? Let's try tests!")
+
+if __name__ == '__main__':
+    # These "asserts" using only for self-checking and not necessary for auto-testing
+
+    # fight tests
+    chuck = Warrior()
+    bruce = Warrior()
+    carl = Knight()
+    dave = Warrior()
+    mark = Warrior()
+    bob = Defender()
+    mike = Knight()
+    rog = Warrior()
+    lancelot = Defender()
+    eric = Vampire()
+    adam = Vampire()
+    richard = Defender()
+    ogre = Warrior()
+    freelancer = Lancer()
+    vampire = Vampire()
+    priest = Healer()
+
+    assert fight(chuck, bruce) is True
+    assert fight(dave, carl) is False
+    assert chuck.is_alive is True
+    assert bruce.is_alive is False
+    assert carl.is_alive is True
+    assert dave.is_alive is False
+    assert fight(carl, mark) is False
+    assert carl.is_alive is False
+    assert fight(bob, mike) is False
+    assert fight(lancelot, rog) is True
+    assert fight(eric, richard) is False
+    assert fight(ogre, adam) is True
+    assert fight(freelancer, vampire) is True
+    assert freelancer.is_alive is True
+    assert freelancer.health == 14
+    priest.heal(freelancer)
+    assert freelancer.health == 16
+
+    # battle tests
+    my_army = Army()
+    my_army.add_units(Defender, 2)
+    my_army.add_units(Healer, 1)
+    my_army.add_units(Vampire, 2)
+    my_army.add_units(Lancer, 2)
+    my_army.add_units(Healer, 1)
+    my_army.add_units(Warrior, 1)
+
+    enemy_army = Army()
+    enemy_army.add_units(Warrior, 2)
+    enemy_army.add_units(Lancer, 4)
+    enemy_army.add_units(Healer, 1)
+    enemy_army.add_units(Defender, 2)
+    enemy_army.add_units(Vampire, 3)
+    enemy_army.add_units(Healer, 1)
+
+    army_3 = Army()
+    army_3.add_units(Warrior, 1)
+    army_3.add_units(Lancer, 1)
+    army_3.add_units(Healer, 1)
+    army_3.add_units(Defender, 2)
+
+    army_4 = Army()
+    army_4.add_units(Vampire, 3)
+    army_4.add_units(Warrior, 1)
+    army_4.add_units(Healer, 1)
+    army_4.add_units(Lancer, 2)
+
+    army_5 = Army()
+    army_5.add_units(Warrior, 10)
+
+    army_6 = Army()
+    army_6.add_units(Warrior, 6)
+    army_6.add_units(Lancer, 5)
+
 battle = Battle()
-print(battle.straight_fight(my_army, enemy_army))
+
+assert battle.fight(my_army, enemy_army) is False
+assert battle.fight(army_3, army_4) is True
+assert battle.straight_fight(army_5, army_6) is False
+print("Coding complete? Let's try tests!")
+
+if __name__ == '__main__':
+    # These "asserts" using only for self-checking and not necessary for auto-testing
+
+    ogre = Warrior()
+    lancelot = Knight()
+    richard = Defender()
+    eric = Vampire()
+    freelancer = Lancer()
+    priest = Healer()
+
+    sword = Sword()
+    shield = Shield()
+    axe = GreatAxe()
+    katana = Katana()
+    wand = MagicWand()
+    super_weapon = Weapon(50, 10, 5, 150, 8)
+
+    ogre.equip_weapon(sword)
+    ogre.equip_weapon(shield)
+    ogre.equip_weapon(super_weapon)
+    lancelot.equip_weapon(super_weapon)
+    richard.equip_weapon(shield)
+    eric.equip_weapon(super_weapon)
+    freelancer.equip_weapon(axe)
+    freelancer.equip_weapon(katana)
+    priest.equip_weapon(wand)
+    priest.equip_weapon(shield)
+
+    assert ogre.health == 125
+    assert lancelot.attack == 17
+    assert richard.defense == 4
+    assert eric.vampirism == 200
+    assert freelancer.health == 15
+    assert priest.heal_power == 5
+
+    assert fight(ogre, eric) is False
+    assert fight(priest, richard) is False
+    assert fight(lancelot, freelancer) is True
+
+    my_army = Army()
+    my_army.add_units(Knight, 1)
+    my_army.add_units(Lancer, 1)
+
+    enemy_army = Army()
+    enemy_army.add_units(Vampire, 1)
+    enemy_army.add_units(Healer, 1)
+
+    my_army.units[0].equip_weapon(axe)
+    my_army.units[1].equip_weapon(super_weapon)
+
+    enemy_army.units[0].equip_weapon(katana)
+    enemy_army.units[1].equip_weapon(wand)
+
+    battle = Battle()
+
+    assert battle.fight(my_army, enemy_army) is True
+print("Coding complete? Let's try tests!")
