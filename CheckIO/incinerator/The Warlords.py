@@ -43,12 +43,12 @@ class Warrior:
         self._weapon_list = value
 
     def equip_weapon(self, weapon_name):
-        for parametr, value in weapon_name.__dict__.items():
-            if parametr in self.__dict__ and (self.__dict__.get(parametr, None) is not None):
-                self.__dict__[parametr] = Warrior._check_max_parametr(self.__dict__[parametr],
-                                                                      weapon_name.__dict__[parametr])
-                if parametr == '_health':
-                    self._max_health = self._health
+        for keys in vars(weapon_name):
+            parametr = getattr(self, keys, None)
+            if parametr:
+                setattr(self, keys, Warrior._check_max_parametr(getattr(self, keys), getattr(weapon_name, keys)))
+                # if parametr == '_health':
+        self._max_health = self._health
         self._weapon_list.append(weapon_name)
 
     @property
@@ -95,7 +95,7 @@ class Warrior:
 
     @staticmethod
     def _calculate_damage(enemy, points):
-        defense = enemy.__dict__.get('_defense', 0)
+        defense = getattr(enemy, '_defense', 0)
         if defense < points:
             damage = points - defense
         else:
@@ -157,7 +157,6 @@ class Warlord(Warrior):
     @defense.setter
     def defense(self, value):
         self._defense = value
-
 
 
 class Vampire(Warrior):
@@ -306,6 +305,7 @@ class Army:
                 if self.check_only_one_warlord():
                     self._units.append(unit)
                     self._warlord_count = 1
+                    break
             else:
                 self._units.append(unit)
 
@@ -317,31 +317,64 @@ class Army:
     def len_army(self):
         return len(self._units)
 
-    @staticmethod
-    def sort_order(class_name):
-        order = {Lancer: 0, Defender: 1, Vampire: 1, Warrior: 1, Knight: 1, Rookie: 2, Healer: 3, Warlord: 9}
-        return order.get(class_name.__class__, 1)
+    # @staticmethod
+    # def sort_order(class_name):
+    #     order = {Lancer: 0, Defender: 1, Vampire: 1, Warrior: 1, Knight: 1, Rookie: 2, Healer: 3, Warlord: 9}
+    #     return order.get(class_name.__class__, 1)
 
     def move_units(self):
         if self._warlord_count:
-            self._units.sort(key=Army.sort_order)
-            if not isinstance(self._units[0].__class__, Healer):
-                first_healer_index = self._find_first_healer_index()
-                if first_healer_index is not None:
-                    last_healer_index = self._find_last_healer_index(first_healer_index+1)
-                    not_healers_part = self._units[1:first_healer_index]
-                    self._units = self._units[0:1] + self._units[first_healer_index:last_healer_index] + \
-                                  not_healers_part + self._units[last_healer_index:]
+            lancers = []
+            healers = []
+            warlords = []
+            others = []
+            for unit in self._units:
+                if isinstance(unit, Lancer):
+                    lancers.append(unit)
+                elif isinstance(unit, Healer):
+                    healers.append(unit)
+                elif isinstance(unit, Warlord):
+                    warlords.append(unit)
+                else:
+                    others.append(unit)
+            soldiers = lancers + others
+            if soldiers:
+                self._units = soldiers
+                self._units[1:1] = healers
+            else:
+                self._units = healers
+            self._units += warlords
+            # if lancers:
+            #     self._units = lancers[0:1]
+            #     self._units = self._units + healers + lancers[1:] + others + warlords
+            # elif others:
+            #     self._units = others[0:1]
+            #     self._units = self._units + healers + others[1:] + warlords
+            # elif healers:
+            #     self._units = healers + warlords
+            # else:
+            #     self._units = warlords
 
-    def _find_first_healer_index(self):
-        for index, unit in enumerate(self._units):
-            if unit.__class__ is Healer:
-                return index
 
-    def _find_last_healer_index(self, start_index):
-        for i in range(start_index, self.len_army):
-            if self._units[i].__class__ is not Healer:
-                return i
+
+            # self._units.sort(key=Army.sort_order)
+            # if not isinstance(self._units[0].__class__, Healer):
+            #     first_healer_index = self._find_first_healer_index()
+            #     if first_healer_index is not None:
+            #         last_healer_index = self._find_last_healer_index(first_healer_index+1)
+            #         not_healers_part = self._units[1:first_healer_index]
+            #         self._units = self._units[0:1] + self._units[first_healer_index:last_healer_index] + \
+            #                       not_healers_part + self._units[last_healer_index:]
+
+    # def _find_first_healer_index(self):
+    #     for index, unit in enumerate(self._units):
+    #         if unit.__class__ is Healer:
+    #             return index
+    #
+    # def _find_last_healer_index(self, start_index):
+    #     for i in range(start_index, self.len_army):
+    #         if self._units[i].__class__ is not Healer:
+    #             return i
 
     def check_only_one_warlord(self):
         return self._warlord_count == 0
@@ -353,6 +386,7 @@ class Army:
         composition = composition + str(self._units[-1]) if self._units else ''
         return (f'{self.__class__.__name__}('
                 f':{composition})')
+
 
 class Battle:
     def __init__(self):
@@ -418,21 +452,3 @@ def fight(*units):
                 units[1].do_attack(units[0], [], [], units[1].attack)
 
         return find_winner(units)
-
-
-army_1 = Army()
-army_2 = Army()
-army_1.add_units(Warrior, 2)
-army_1.add_units(Lancer, 3)
-army_1.add_units(Defender, 1)
-army_1.add_units(Warlord, 4)
-army_2.add_units(Warlord, 1)
-army_2.add_units(Vampire, 1)
-army_2.add_units(Rookie, 1)
-army_2.add_units(Knight, 1)
-army_1.units[0].equip_weapon(Sword())
-army_2.units[0].equip_weapon(Shield())
-army_1.move_units()
-army_2.move_units()
-battle = Battle()
-print(battle.fight(army_1, army_2))
