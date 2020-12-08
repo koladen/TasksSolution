@@ -150,42 +150,44 @@ class Drink(ABC):
         self.name = name
 
 
-class Sushi(Food):
-    def __init__(self, name):
-        super().__init__(name)
-
-
-class Tea(Drink):
-    def __init__(self, name):
-        super().__init__(name)
-
-
-class Dumplings(Food):
-    def __init__(self, name):
-        super().__init__(name)
-
-
-class Compote(Drink):
-    def __init__(self, name):
-        super().__init__(name)
-
-
-class Pizza(Food):
-    def __init__(self, name):
-        super().__init__(name)
-
-
-class Juice(Drink):
-    def __init__(self, name):
-        super().__init__(name)
+# class Sushi(Food):
+#     def __init__(self, name):
+#         super().__init__(name)
+#
+#
+# class Tea(Drink):
+#     def __init__(self, name):
+#         super().__init__(name)
+#
+#
+# class Dumplings(Food):
+#     def __init__(self, name):
+#         super().__init__(name)
+#
+#
+# class Compote(Drink):
+#     def __init__(self, name):
+#         super().__init__(name)
+#
+#
+# class Pizza(Food):
+#     def __init__(self, name):
+#         super().__init__(name)
+#
+#
+# class Juice(Drink):
+#     def __init__(self, name):
+#         super().__init__(name)
 
 
 class JapaneseCook(AbstractCook):
 
     def __init__(self):
         super().__init__()
-        self.food = Sushi('Sushi')
-        self.drink = Tea('Tea')
+        # self.food = Sushi('Sushi')
+        # self.drink = Tea('Tea')
+        self.food = Food('Sushi')
+        self.drink = Drink('Tea')
         self.total_amount = 0
 
     def add_food(self, amount, price):
@@ -206,8 +208,10 @@ class RussianCook(AbstractCook):
 
     def __init__(self):
         super().__init__()
-        self.food = Dumplings('Dumplings')
-        self.drink = Compote('Compote')
+        # self.food = Dumplings('Dumplings')
+        # self.drink = Compote('Compote')
+        self.food = Food('Dumplings')
+        self.drink = Drink('Compote')
         self.total_amount = 0
 
     def add_food(self, amount, price):
@@ -228,8 +232,10 @@ class ItalianCook(AbstractCook):
 
     def __init__(self):
         super().__init__()
-        self.food = Pizza('Pizza')
-        self.drink = Juice('Juice')
+        # self.food = Pizza('Pizza')
+        # self.drink = Juice('Juice')
+        self.food = Food('Pizza')
+        self.drink = Drink('Juice')
         self.total_amount = 0
 
     def add_food(self, amount, price):
