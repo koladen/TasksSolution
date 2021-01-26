@@ -1,3 +1,7 @@
+"""
+Паттерн Наблюдатель
+"""
+
 class Friend:
     def __init__(self, name):
         self.current_invite = None

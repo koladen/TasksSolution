@@ -1,3 +1,7 @@
+"""
+Паттерн Стратегия
+"""
+
 from math import sqrt
 
 PI = 3.1415

@@ -1,3 +1,7 @@
+"""
+Паттерн Мост
+"""
+
 SECONDS_IN_MINUTE = 60
 MAX_SECONDS = 5400
 MIN_SECONDS = 0
